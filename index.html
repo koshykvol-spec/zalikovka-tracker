@@ -160,6 +160,10 @@
 
   .cell-grade input { width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600; text-align: center; background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 4px; padding: 6px 2px; color: var(--ink); }
   .cell-grade input.has-grade { border-color: var(--green); color: var(--green); background: var(--green-bg); }
+  .cell-grade input.teacher { border-style: double; border-width: 3px; cursor: not-allowed; }
+  .submit-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 2px 4px 8px 4px; font-size: 13px; color: var(--ink-soft); }
+  .submit-btn { font: inherit; font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 4px; border: 1px solid var(--rule); background: var(--paper-raised); color: var(--ink); cursor: pointer; }
+  .submit-btn:disabled { opacity: .5; cursor: wait; }
   .cell-grade input::placeholder { color: var(--ink-faint); font-weight: 400; }
 
   .cell-note input { width: 100%; background: transparent; border: none; border-bottom: 1px dashed var(--rule); font-size: 13px; color: var(--ink-soft); padding: 5px 2px; font-family: 'Inter', sans-serif; }
@@ -285,7 +289,7 @@
     getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
-    getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp
+    getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp, collection, query, where
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   /* ======================================================================
@@ -304,6 +308,8 @@
     appId: "1:747704370216:web:05cb278c12da29939da11d"
   };
   const ALLOWED_DOMAIN = "vvpc.com.ua";
+  // URL веб-застосунку Apps Script (apps_script_Code.gs). Порожній рядок — кнопки «Здати звіт» приховані.
+  const UPLOAD_URL = "https://script.google.com/macros/s/AKfycbwP0kpGeEkOeat2U8FuP49wOhhbYtmUmSrhOCnxZ9Rey4PYSPkXiorHipBP7f3gdm16aA/exec";
   /* ====================================================================== */
 
   const app = initializeApp(firebaseConfig);
@@ -366,6 +372,11 @@
   var unsubscribeSnapshot = null;
   var saveTimer = null;
   var justWroteAt = 0;
+  var teacherGrades = {};          // {"5": {score, date}} — пише лише викладач (teacher_grades/{uid})
+  var unsubscribeTeacher = null;
+  var submissions = {};            // {5: {status, submittedAt, msg}} — здачі поточного студента
+  var unsubscribeSubs = null;
+  var submitEls = {};
 
   function safeGet(key) { try { return window.localStorage.getItem(key); } catch (e) { return null; } }
   function safeSet(key, v) { try { window.localStorage.setItem(key, v); } catch (e) {} }
@@ -561,6 +572,23 @@
     wrapper.appendChild(driveLine);
     driveLineEls[work.id] = driveLine;
 
+    var submitLine = document.createElement("div");
+    submitLine.className = "submit-line";
+    submitLine.hidden = !UPLOAD_URL;
+    var fileInp = document.createElement("input");
+    fileInp.type = "file"; fileInp.accept = ".docx"; fileInp.hidden = true;
+    var subBtn = document.createElement("button");
+    subBtn.type = "button"; subBtn.className = "submit-btn"; subBtn.textContent = "Здати звіт (.docx)";
+    var subMsg = document.createElement("span");
+    subBtn.addEventListener("click", function () { fileInp.click(); });
+    fileInp.addEventListener("change", function () {
+      if (fileInp.files[0]) submitReport(work, fileInp.files[0], subBtn, subMsg);
+      fileInp.value = "";
+    });
+    submitLine.appendChild(subBtn); submitLine.appendChild(fileInp); submitLine.appendChild(subMsg);
+    wrapper.appendChild(submitLine);
+    submitEls[work.id] = {btn: subBtn, msg: subMsg};
+
     rowEls[work.id] = wrapper;
     return wrapper;
   }
@@ -607,6 +635,70 @@
   var RING_C = 2 * Math.PI * 42;
   ringFg.setAttribute("stroke-dasharray", RING_C.toFixed(1));
 
+  async function submitReport(work, file, btn, msg) {
+    if (!currentUser) return;
+    if (!/\.docx$/i.test(file.name)) { msg.textContent = "Потрібен файл .docx"; return; }
+    if (file.size > 10 * 1024 * 1024) { msg.textContent = "Файл більший за 10 МБ"; return; }
+    btn.disabled = true; msg.textContent = "Завантаження…";
+    try {
+      var data = await new Promise(function (res, rej) {
+        var r = new FileReader();
+        r.onload = function () { res(String(r.result).split(",")[1]); };
+        r.onerror = function () { rej(new Error("Не вдалося прочитати файл")); };
+        r.readAsDataURL(file);
+      });
+      var idToken = await currentUser.getIdToken();
+      var resp = await fetch(UPLOAD_URL, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
+        body: JSON.stringify({idToken: idToken, pr: work.id, fileName: file.name, data: data})});
+      var out = await resp.json();
+      if (!out.ok) throw new Error(out.error || "помилка сервера");
+      await setDoc(doc(db, "submissions", currentUser.uid + "_" + work.id),
+        {uid: currentUser.uid, pr: work.id, fileName: file.name, submittedAt: serverTimestamp(), status: "pending"});
+    } catch (e) {
+      console.error(e); msg.textContent = "Не вдалося здати: " + (e.message || "помилка");
+      btn.disabled = false; return;
+    }
+    btn.disabled = false;
+  }
+
+  function renderSubmissions() {
+    WORKS.forEach(function (w) {
+      var el = submitEls[w.id], s = submissions[w.id];
+      if (!el || el.btn.disabled) return;
+      if (!s) { el.msg.textContent = ""; el.btn.textContent = "Здати звіт (.docx)"; return; }
+      el.btn.textContent = "Здати повторно";
+      var when = (s.submittedAt && s.submittedAt.toDate) ? s.submittedAt.toDate().toLocaleString("uk-UA") : "";
+      el.msg.textContent = s.status === "graded" ? "Перевірено" + (when ? " (здано " + when + ")" : "")
+        : s.status === "error" ? "Помилка перевірки: " + (s.msg || "здайте ще раз")
+        : "Здано" + (when ? " " + when : "") + " — очікує перевірки";
+    });
+  }
+
+  function effectiveGrade(id) {
+    var t = teacherGrades[id];
+    if (t && typeof t.score === "number") return t.score;
+    return state.works[id].grade;
+  }
+
+  function renderTeacherGrades() {
+    WORKS.forEach(function (w) {
+      var inp = gradeInputEls[w.id], t = teacherGrades[w.id];
+      if (t && typeof t.score === "number") {
+        inp.value = t.score;
+        inp.disabled = true;
+        inp.classList.add("has-grade", "teacher");
+        inp.title = "Оцінка викладача" + (t.date ? " (" + t.date + ")" : "");
+      } else {
+        inp.disabled = false;
+        inp.classList.remove("teacher");
+        inp.removeAttribute("title");
+        var own = state.works[w.id].grade;
+        inp.value = (own !== null) ? own : "";
+        inp.classList.toggle("has-grade", own !== null);
+      }
+    });
+  }
+
   function updateAll() {
     var total = WORKS.length, todo = 0, progress = 0, done = 0, gradeSum = 0, gradeCount = 0;
     var byTheme = {1: {done: 0, total: 0}, 2: {done: 0, total: 0}, 3: {done: 0, total: 0}};
@@ -616,7 +708,8 @@
       if (st.status === "todo") todo++;
       else if (st.status === "progress") progress++;
       else { done++; byTheme[w.theme].done++; }
-      if (st.grade !== null) { gradeSum += st.grade; gradeCount++; }
+      var g = effectiveGrade(w.id);
+      if (g !== null) { gradeSum += g; gradeCount++; }
     });
     document.getElementById("countTodo").textContent = todo;
     document.getElementById("countProgress").textContent = progress;
@@ -656,6 +749,7 @@
       gradeInputEls[w.id].classList.toggle("has-grade", st.grade !== null);
       rowEls[w.id].querySelector(".cell-note input").value = st.note || "";
     });
+    renderTeacherGrades();
     updateAll();
     applyFilter();
     updateDriveLines();
@@ -722,6 +816,19 @@
       document.getElementById("layout").hidden = false;
       document.getElementById("cabinetBar").hidden = false;
 
+      if (unsubscribeSubs) unsubscribeSubs();
+      unsubscribeSubs = onSnapshot(query(collection(db, "submissions"), where("uid", "==", user.uid)), function (qs) {
+        submissions = {};
+        qs.forEach(function (d) { var x = d.data(); submissions[x.pr] = x; });
+        renderSubmissions();
+      }, function () {});
+      if (unsubscribeTeacher) unsubscribeTeacher();
+      unsubscribeTeacher = onSnapshot(doc(db, "teacher_grades", user.uid), function (tsnap) {
+        teacherGrades = (tsnap.exists() && tsnap.data().works) || {};
+        renderTeacherGrades();
+        updateAll();
+      }, function () { /* немає доступу або немає документа — працюємо без оцінок викладача */ });
+
       if (unsubscribeSnapshot) unsubscribeSnapshot();
       unsubscribeSnapshot = onSnapshot(docRef, {includeMetadataChanges: true}, function (snap) {
         if (snap.metadata.hasPendingWrites) return;
@@ -742,6 +849,10 @@
     currentUser = null;
     docRef = null;
     if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+    if (unsubscribeTeacher) { unsubscribeTeacher(); unsubscribeTeacher = null; }
+    if (unsubscribeSubs) { unsubscribeSubs(); unsubscribeSubs = null; }
+    submissions = {};
+    teacherGrades = {};
     document.getElementById("layout").hidden = true;
     document.getElementById("cabinetBar").hidden = true;
     document.getElementById("authGate").hidden = false;
