@@ -453,7 +453,7 @@
   var themeFractionEls = {}, themeRuleFillEls = {}, themeBarFillEls = {};
   var rowEls = {}, gradeInputEls = {}, statusButtonEls = {}, driveLineEls = {};
 
-  [1, 2, 3].forEach(function (themeId) {
+  Object.keys(THEMES).map(Number).forEach(function (themeId) {
     var section = document.createElement("section");
     section.className = "theme-section";
     var head = document.createElement("div");
@@ -478,7 +478,7 @@
       '<div class="theme-bar-track"><div class="theme-bar-fill" id="barfill-' + themeId + '" style="width:0%"></div></div>';
     themeBarsEl.appendChild(barRow);
   });
-  [1, 2, 3].forEach(function (themeId) { themeBarFillEls[themeId] = document.getElementById("barfill-" + themeId); });
+  Object.keys(THEMES).map(Number).forEach(function (themeId) { themeBarFillEls[themeId] = document.getElementById("barfill-" + themeId); });
 
   function slugifyTitle(title) {
     return title.split(/[\s,.()'"«»]+/).filter(Boolean).slice(0, 4).join("_").replace(/[\\/:*?<>|]/g, "");
@@ -718,7 +718,7 @@
 
   function updateAll() {
     var total = WORKS.length, todo = 0, progress = 0, done = 0, gradeSum = 0, gradeCount = 0;
-    var byTheme = {1: {done: 0, total: 0}, 2: {done: 0, total: 0}, 3: {done: 0, total: 0}};
+    var byTheme = {}; Object.keys(THEMES).forEach(function (k) { byTheme[k] = {done: 0, total: 0}; });
     WORKS.forEach(function (w) {
       var st = state.works[w.id];
       byTheme[w.theme].total++;
@@ -736,7 +736,7 @@
     document.getElementById("avgGrade").textContent = gradeCount ? (gradeSum / gradeCount).toFixed(1) : "—";
     var pct = total ? done / total : 0;
     ringFg.setAttribute("stroke-dashoffset", (RING_C * (1 - pct)).toFixed(1));
-    [1, 2, 3].forEach(function (themeId) {
+    Object.keys(THEMES).map(Number).forEach(function (themeId) {
       var t = byTheme[themeId];
       var tp = t.total ? (t.done / t.total) * 100 : 0;
       themeFractionEls[themeId].textContent = t.done + "/" + t.total;
