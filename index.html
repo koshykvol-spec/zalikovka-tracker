@@ -649,7 +649,7 @@
       });
       var idToken = await currentUser.getIdToken();
       var resp = await fetch(UPLOAD_URL, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
-        body: JSON.stringify({idToken: idToken, pr: work.id, fileName: file.name, data: data})});
+        body: JSON.stringify({idToken: idToken, subject: "ism", pr: work.id, fileName: file.name, data: data})});
       var out = await resp.json();
       if (!out.ok) throw new Error(out.error || "помилка сервера");
       await setDoc(doc(db, "submissions", currentUser.uid + "_" + work.id),
@@ -669,6 +669,7 @@
       el.btn.textContent = "Здати повторно";
       var when = (s.submittedAt && s.submittedAt.toDate) ? s.submittedAt.toDate().toLocaleString("uk-UA") : "";
       el.msg.textContent = s.status === "graded" ? "Перевірено" + (when ? " (здано " + when + ")" : "")
+        : s.status === "review" ? "Роботу перевіряє викладач" + (when ? " (здано " + when + ")" : "")
         : s.status === "error" ? "Помилка перевірки: " + (s.msg || "здайте ще раз")
         : "Здано" + (when ? " " + when : "") + " — очікує перевірки";
     });
