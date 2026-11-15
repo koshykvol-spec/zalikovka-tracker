@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Як здавати роботи — Мови і технології програмування</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1b2a3f;
+    --ink-soft: #4c5872;
+    --ink-faint: #7c8598;
+    --paper: #f3efe2;
+    --paper-raised: #fbf9f1;
+    --rule: #cec4a7;
+    --rule-soft: #e3dcc6;
+    --gold: #93712a;
+    --gold-soft: #e7d9ae;
+    --gold-bg: #f2e9cd;
+    --green: #2f6b4a;
+    --green-bg: #dfe7db;
+    --amber: #93620f;
+    --amber-bg: #f0e0bb;
+    --grey: #8c8570;
+    --grey-bg: #e7e2d1;
+    --danger: #93392c;
+    --shadow: rgba(27, 42, 63, 0.12);
+    --focus: #4c5872;
+    color-scheme: light;
+    box-sizing: border-box;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #ece4cf; --ink-soft: #b7ae96; --ink-faint: #857c66;
+      --paper: #172232; --paper-raised: #1e2c40;
+      --rule: #3a4a62; --rule-soft: #2a394f;
+      --gold: #d9b95c; --gold-soft: #4a3c1e; --gold-bg: rgba(217, 185, 92, 0.14);
+      --green: #7cc39a; --green-bg: rgba(124, 195, 154, 0.14);
+      --amber: #e3b45c; --amber-bg: rgba(227, 180, 92, 0.14);
+      --grey: #9aa3b5; --grey-bg: rgba(154, 163, 181, 0.12);
+      --danger: #e0897b; --shadow: rgba(0, 0, 0, 0.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #ece4cf; --ink-soft: #b7ae96; --ink-faint: #857c66;
+    --paper: #172232; --paper-raised: #1e2c40;
+    --rule: #3a4a62; --rule-soft: #2a394f;
+    --gold: #d9b95c; --gold-soft: #4a3c1e; --gold-bg: rgba(217, 185, 92, 0.14);
+    --green: #7cc39a; --green-bg: rgba(124, 195, 154, 0.14);
+    --amber: #e3b45c; --amber-bg: rgba(227, 180, 92, 0.14);
+    --grey: #9aa3b5; --grey-bg: rgba(154, 163, 181, 0.12);
+    --danger: #e0897b; --shadow: rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: inherit; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+  body { -webkit-font-smoothing: antialiased; line-height: 1.6; }
+  a { color: var(--gold); text-underline-offset: 2px; }
+  .masthead { border-bottom: 3px double var(--rule); }
+  .masthead-inner { max-width: 820px; margin: 0 auto; padding: 28px 24px 22px; }
+  .masthead h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: clamp(26px, 4vw, 36px); line-height: 1.1; margin: 0 0 8px; }
+  .masthead p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+  main { max-width: 820px; margin: 0 auto; padding: 28px 24px 56px; }
+  ol.steps { list-style: none; counter-reset: s; margin: 0; padding: 0; }
+  ol.steps > li { counter-increment: s; position: relative; padding: 0 0 22px 52px; border-bottom: 1px solid var(--rule-soft); margin-bottom: 22px; }
+  ol.steps > li:last-child { border-bottom: none; margin-bottom: 0; }
+  ol.steps > li::before { content: counter(s); position: absolute; left: 0; top: -2px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 17px; color: var(--gold); background: var(--gold-bg); border: 1px solid var(--gold-soft); }
+  h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 19px; margin: 0 0 6px; }
+  p { margin: 0 0 8px; }
+  code { font-family: 'IBM Plex Mono', monospace; font-size: 13px; background: var(--grey-bg); padding: 1px 6px; border-radius: 4px; }
+  ul { margin: 6px 0 0; padding-left: 20px; color: var(--ink-soft); }
+  .note { margin-top: 30px; padding: 14px 18px; background: var(--amber-bg); border-left: 3px solid var(--amber); border-radius: 4px; }
+  .note h2 { font-size: 16px; color: var(--amber); }
+  .back { display: inline-block; margin-top: 28px; font-size: 14px; }
+  @media (max-width: 520px) { ol.steps > li { padding-left: 46px; } }
+</style>
+</head>
+<body>
+<div class="masthead"><div class="masthead-inner">
+  <h1>Як здавати практичні роботи</h1>
+  <p>Мови і технології програмування · спеціальність 015</p>
+</div></div>
+<main>
+<ol class="steps">
+  <li><h2>Увійдіть у трекер</h2>
+    <p>Відкрийте <a href="mitp.html">трекер</a> зі своїм акаунтом <code>@vvpc.com.ua</code>. Навпроти потрібної ПР натисніть <strong>«Здати роботу»</strong>.</p></li>
+  <li><h2>Один архів на одну ПР</h2>
+    <p>Здавайте <strong>один архів <code>.zip</code> на одну практичну роботу</strong>. У ньому мають бути всі файли програм цієї ПР і звіт Word (<code>.docx</code>). Розмір файлу — не більше 10 МБ.</p>
+    <p>Якщо вся ПР складається з однієї програми, можна здати один файл <code>.py</code> або <code>.cpp</code>.</p></li>
+  <li><h2>Назви файлів програм</h2>
+    <p>Називайте так: <code>Прізвище_ПР22_з1.py</code>, <code>Прізвище_ПР22_з2.py</code> і далі (з1, з2 — номери завдань). Для C++ розширення <code>.cpp</code>.</p>
+    <p>Якщо в умові ПР вказано інші імена (наприклад, кілька завдань в одному файлі), дотримуйтесь умови.</p></li>
+  <li><h2>C++ Builder (ПР88–100)</h2>
+    <p>В архів покладіть <strong>теку проєкту цілком</strong>: <code>*.bpr</code>, <code>*.cpp</code>, <code>*.h</code>, <code>*.dfm</code>, <code>*.res</code> і файли даних (зображення, звуки). Файл <code>.exe</code> додавати не потрібно.</p></li>
+  <li><h2>Імена з умови</h2>
+    <p>Імена функцій, змінних, написи на кнопках і в мітках мають збігатися з умовою — їх перевіряє автоматична програма. Прізвище пишіть без пробілів.</p></li>
+  <li><h2>Повторна здача</h2>
+    <p>Після здачі під кнопкою з’явиться «Здано ДД.ММ.РРРР, ГГ:ХХ — очікує перевірки». Щоб виправити роботу, натисніть <strong>«Здати повторно»</strong>: нова здача замінює попередню.</p>
+    <p>Статус «Здано» означає лише, що файл отримано. Результат перевірки викладач виставляє окремо.</p></li>
+</ol>
+
+<div class="note">
+  <h2>Перед здачею</h2>
+  <ul>
+    <li>Запустіть програму й переконайтеся, що вона працює з прикладами з умови: автоматична перевірка порівнює вивід програми з очікуваним (з урахуванням формату чисел).</li>
+    <li>Не здавайте архів із паролем і не перейменовуйте <code>.rar</code> на <code>.zip</code>: сайт перевіряє вміст файлу й відхилить такий архів.</li>
+  </ul>
+</div>
+<a class="back" href="mitp.html">← До трекера</a>
+</main>
+</body>
+</html>
