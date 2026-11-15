@@ -646,9 +646,9 @@
     submitLine.className = "submit-line";
     submitLine.hidden = !UPLOAD_URL;
     var fileInp = document.createElement("input");
-    fileInp.type = "file"; fileInp.accept = ".docx"; fileInp.hidden = true;
+    fileInp.type = "file"; fileInp.accept = ".docx,.pdf,.zip,.rar,.7z,.py,.cpp,.h,.txt"; fileInp.hidden = true;
     var subBtn = document.createElement("button");
-    subBtn.type = "button"; subBtn.className = "submit-btn"; subBtn.textContent = "Здати звіт (.docx)";
+    subBtn.type = "button"; subBtn.className = "submit-btn"; subBtn.textContent = "Здати роботу";
     var subMsg = document.createElement("span");
     subBtn.addEventListener("click", function () { fileInp.click(); });
     fileInp.addEventListener("change", function () {
@@ -707,7 +707,7 @@
 
   async function submitReport(work, file, btn, msg) {
     if (!currentUser) return;
-    if (!/\.docx$/i.test(file.name)) { msg.textContent = "Потрібен файл .docx"; return; }
+    if (!/\.(docx|pdf|zip|rar|7z|py|cpp|h|txt)$/i.test(file.name)) { msg.textContent = "Потрібен файл .docx, .pdf, .zip, .rar, .7z, .py або .cpp"; return; }
     if (file.size > 10 * 1024 * 1024) { msg.textContent = "Файл більший за 10 МБ"; return; }
     btn.disabled = true; msg.textContent = "Завантаження…";
     try {
@@ -735,7 +735,7 @@
     WORKS.forEach(function (w) {
       var el = submitEls[w.id], s = submissions[w.id];
       if (!el || el.btn.disabled) return;
-      if (!s) { el.msg.textContent = ""; el.btn.textContent = "Здати звіт (.docx)"; return; }
+      if (!s) { el.msg.textContent = ""; el.btn.textContent = "Здати роботу"; return; }
       el.btn.textContent = "Здати повторно";
       var when = (s.submittedAt && s.submittedAt.toDate) ? s.submittedAt.toDate().toLocaleString("uk-UA") : "";
       el.msg.textContent = s.status === "graded" ? "Перевірено" + (when ? " (здано " + when + ")" : "")
